@@ -28,9 +28,9 @@ export function initPoints() {
 				pos1[i * 3 + 2] = 40 * Math.random() - 20
 
 				// sphere
-				const theta = (Math.PI * Math.random() * 9) / 10
-				const phi = (Math.PI * 2 * Math.random() * 10) / 10
-				const r = 5 * Math.random() ** (1 / 2)
+				const theta = (Math.PI * x) / 10
+				const phi = (Math.PI * 2 * y) / 10
+				const r = z
 
 				pos2[i * 3 + 0] = r * Math.sin(theta) * Math.cos(phi)
 				pos2[i * 3 + 1] = r * Math.sin(theta) * Math.sin(phi)
