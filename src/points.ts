@@ -1,4 +1,4 @@
-import { BufferAttribute, BufferGeometry, Points, PointsMaterial, ShaderMaterial } from 'three'
+import { BufferAttribute, BufferGeometry, Points, ShaderMaterial } from 'three'
 import { globalContext } from './store'
 
 export function initPoints() {
@@ -17,9 +17,6 @@ export function initPoints() {
 	for (let x = 0; x < 10; ++x) {
 		for (let y = 0; y < 10; ++y) {
 			for (let z = 0; z < 10; ++z) {
-				// const edge = [0, 9]
-				// if (!edge.includes(x) && !edge.includes(y) && !edge.includes(z)) continue
-
 				//cube
 				pos0[i * 3 + 0] = x - 4.5
 				pos0[i * 3 + 1] = y - 4.5
@@ -53,12 +50,7 @@ export function initPoints() {
 	geo.setAttribute('position2', new BufferAttribute(pos2, 3))
 	geo.setAttribute('color', new BufferAttribute(colors, 3))
 
-	const mat = new PointsMaterial({
-		vertexColors: true,
-		size: 0.1,
-	})
-
-	const points = new Points(geo, mat)
+	const points = new Points(geo, getMat())
 	globalContext.points = points
 	globalContext.scene.add(points)
 
@@ -69,8 +61,56 @@ export function initPoints() {
 }
 
 const getMat = () => {
+	const uniforms = {
+		pointSize: { value: 10 },
+		step: { value: 0 },
+	}
+
+	globalContext.updateMap.set('step', (t: number) => {
+		uniforms.step.value = (t % 9000) / 3000
+	})
+
 	const pointsMat = new ShaderMaterial({
-		uniforms: {},
+		uniforms,
+		vertexShader: `
+            uniform float pointSize;
+            uniform float step;
+
+            attribute vec3 color;
+            attribute vec3 position1;
+            attribute vec3 position2;
+            varying vec3 vColor;
+
+			void main() {
+                vColor = color;
+
+                float a = 0.0;
+                vec3 vPosition = position;
+
+                if(step <= 1.0){
+                    vPosition = mix(position, position1, step);
+                }else if( step <= 2.0){
+                    vPosition = mix(position1, position2, step - 1.0);
+                }else {
+                    vPosition = mix(position2, position, step - 2.0);
+                }
+				vec4 mvPosition = modelViewMatrix * vec4( vPosition, 1.0 );
+
+				gl_PointSize = pointSize * ( 10.0 / -mvPosition.z );
+
+				gl_Position = projectionMatrix * mvPosition;
+
+			}`,
+		fragmentShader: `
+            varying vec3 vColor;
+
+            void main() {
+                float len = distance( gl_PointCoord, vec2(0.5,0.5));
+                if(len>= 0.5){
+                    discard;
+                }
+				gl_FragColor = vec4(vColor,1.0 );
+			}`,
 	})
 
 	return pointsMat

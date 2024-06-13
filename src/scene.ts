@@ -10,11 +10,12 @@ export const initScene = (el: HTMLElement) => {
 	camera.lookAt(0, 0, 0)
 }
 
-function animate() {
+function animate(t: number) {
 	const { camera, renderer, scene, updateMap } = globalContext
 
 	for (let update of updateMap.values()) {
-		update()
+		update(t)
 	}
+
 	renderer.render(scene, camera)
 }
